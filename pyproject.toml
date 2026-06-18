@@ -1,0 +1,19 @@
+[project]
+name = "facebook-appium-tests"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "appium-python-client>=5.3.1",
+    "pytest>=9.0.3",
+    "pytest-html>=4.2.0",
+    "python-dotenv>=1.2.2",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "auth: Tests de autenticación de Facebook",
+    "messaging: Tests del módulo de mensajería de Facebook",
+    "notifications: Tests del módulo de notificaciones de Facebook",
+]
