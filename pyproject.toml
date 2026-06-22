@@ -9,11 +9,16 @@ dependencies = [
     "pytest>=9.0.3",
     "pytest-html>=4.2.0",
     "python-dotenv>=1.2.2",
+    "undetected-chromedriver>=3.5.5",
+    "setuptools>=75.0.0",
 ]
 
 [tool.pytest.ini_options]
 markers = [
-    "auth: Tests de autenticación de Facebook",
-    "messaging: Tests del módulo de mensajería de Facebook",
-    "notifications: Tests del módulo de notificaciones de Facebook",
+    "auth: Tests de autenticación de Facebook (nativo)",
+    "messaging: Tests del módulo de mensajería de Facebook (nativo)",
+    "notifications: Tests del módulo de notificaciones de Facebook (nativo)",
+    "auth_web: Tests de autenticación en web móvil de Facebook",
+    "messaging_web: Tests de mensajería en web móvil de Facebook",
+    "notifications_web: Tests de notificaciones en web móvil de Facebook",
 ]

@@ -167,6 +167,8 @@ def test_tc_fb_msg_001_acceso_mensajeria(driver):
     login_result = ensure_logged_in(driver)
     _dismiss_helper_modal(LoginPage(driver))
 
+    LoginPage(driver).take_screenshot("TC_FB_MSG_001_feed_inicial")
+
     messenger = MessengerPage(driver)
     messenger.open_messenger()
 
@@ -214,6 +216,8 @@ def test_tc_fb_msg_002_envio_mensaje_texto(driver):
             f"Contacto «{contact}» no encontrado o conversación no abierta; "
             "configura FB_CONTACT_NAME con un contacto real."
         )
+
+    messenger.take_screenshot("TC_FB_MSG_002_conversacion_abierta")
 
     sent = messenger.send_message(test_message)
     time.sleep(2)
@@ -316,8 +320,12 @@ def test_tc_fb_msg_004_estado_mensaje_enviado(driver):
             "configura FB_CONTACT_NAME con un contacto real."
         )
 
+    messenger.take_screenshot("TC_FB_MSG_004_conversacion_abierta")
+
     messenger.send_message(test_message)
     time.sleep(1)
+
+    messenger.take_screenshot("TC_FB_MSG_004_mensaje_enviado")
 
     status = messenger.get_message_status(timeout=15)
 
@@ -333,6 +341,11 @@ def test_tc_fb_msg_004_estado_mensaje_enviado(driver):
 # TC_FB_MSG_005 – Envío de mensaje con conexión interrumpida
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(
+    reason="TC_FB_MSG_005 requiere conexión ADB por USB. "
+           "Al deshabilitar la red en un dispositivo ADB-WiFi se corta la sesión ADB. "
+           "Conectar por USB y quitar este decorador para ejecutar el test."
+)
 @pytest.mark.messaging
 def test_tc_fb_msg_005_envio_sin_conexion(driver):
     """
@@ -412,6 +425,8 @@ def test_tc_fb_msg_006_busqueda_conversacion(driver):
     messenger = MessengerPage(driver)
     messenger.open_messenger()
     messenger.wait_for_chat_list(timeout=15)
+
+    messenger.take_screenshot("TC_FB_MSG_006_bandeja_antes_busqueda")
 
     messenger.search_conversation(contact)
     time.sleep(2)

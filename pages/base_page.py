@@ -317,12 +317,26 @@ class BasePage:
         print("\n--- PAGE SOURCE ---")
         print(self.driver.page_source)
 
+    @staticmethod
+    def _screenshots_dir(name):
+        """Devuelve la ruta de carpeta de evidencia según el prefijo del nombre."""
+        import os
+        if name.startswith("TC_AUTH_") or name.startswith("ensure_"):
+            subdir = os.path.join("reports", "screenshots", "auth")
+        elif name.startswith("TC_FB_MSG_"):
+            subdir = os.path.join("reports", "screenshots", "messaging")
+        elif name.startswith("TC_FB_NOT_"):
+            subdir = os.path.join("reports", "screenshots", "notifications")
+        else:
+            subdir = os.path.join("reports", "screenshots")
+        os.makedirs(subdir, exist_ok=True)
+        return subdir
+
     def take_screenshot(self, name):
         import os
         from datetime import datetime
 
-        screenshots_dir = "reports/screenshots"
-        os.makedirs(screenshots_dir, exist_ok=True)
+        screenshots_dir = self._screenshots_dir(name)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(screenshots_dir, f"{name}_{timestamp}.png")
@@ -340,8 +354,7 @@ class BasePage:
         import os
         from datetime import datetime
 
-        screenshots_dir = "reports/screenshots"
-        os.makedirs(screenshots_dir, exist_ok=True)
+        screenshots_dir = self._screenshots_dir(name)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(screenshots_dir, f"{name}_{timestamp}.xml")

@@ -362,6 +362,8 @@ def test_tc_auth_001_login_valid(driver):
 
     ensure_logged_out(login_page)
 
+    login_page.take_screenshot("TC_AUTH_001_formulario_login")
+
     login_page.login(
         get_env_required("FB_EMAIL"),
         get_env_required("FB_PASSWORD")
@@ -495,6 +497,8 @@ def test_tc_auth_003_login_unknown_user(driver):
 
     ensure_logged_out(login_page)
 
+    login_page.take_screenshot("TC_AUTH_003_formulario_login")
+
     login_page.login(
         get_env_required("FB_UNKNOWN_USER"),
         get_env_required("FB_PASSWORD")
@@ -518,6 +522,9 @@ def test_tc_auth_004_empty_fields(driver):
     login_page = LoginPage(driver)
 
     ensure_logged_out(login_page)
+
+    login_page.take_screenshot("TC_AUTH_004_formulario_login")
+
     login_page.login_empty_fields()
     time.sleep(1.5)
 
@@ -581,6 +588,8 @@ def test_tc_auth_005_account_recovery(driver):
             "La app puede estar en un estado inesperado."
         )
 
+    login_page.take_screenshot("TC_AUTH_005_formulario_login")
+
     # Paso 4: tocar '¿Olvidaste tu contraseña?' en el formulario de login
     try:
         login_page.go_to_recovery()
@@ -634,6 +643,8 @@ def test_tc_auth_007_session_persistence(driver):
         return  # PASS: se llegó al flujo de login esperado
 
     app_package = get_env_required("APP_PACKAGE")
+
+    login_page.take_screenshot("TC_AUTH_007_sesion_activa_antes_reinicio")
 
     driver.terminate_app(app_package)
     time.sleep(2)
