@@ -7,16 +7,11 @@ from pages.base_page import BasePage
 
 
 class LoginPage(BasePage):
-    # Descripciones exactas según page_source.xml de la app
     EMAIL_INPUT_DESC = "Celular o correo electrónico"
     PASSWORD_INPUT_DESC = "Contraseña"
     LOGIN_BUTTON_DESC = "Iniciar sesión"
     FORGOT_PASSWORD_DESC = "¿Olvidaste tu contraseña?"
     CREATE_ACCOUNT_BUTTON_DESC = "Crear cuenta nueva"
-
-    # ==========================================================
-    # LOGIN
-    # ==========================================================
 
     def login(self, email=None, password=None):
         """
@@ -36,18 +31,32 @@ class LoginPage(BasePage):
 
         if not password:
             raise ValueError("No se recibió password y tampoco existe la variable FB_PASSWORD.")
-
-        # El autofill picker del sistema (android:id/autofill_dataset_picker) o el GM
-        # bottom sheet aparecen al clicar campos de texto y ocultan los EditText de FB
-        # para UiAutomator2. Se descartan antes de cada interacción.
-
         self._save_page_source("DEBUG_login_start")
         self.take_screenshot("DEBUG_login_start")
 
-        # --- EMAIL ---
         self._dismiss_gm_popup_if_present()
-        self.type_by_edittext_index(0, email)
-        print("login: email escrito")
+        try:
+            email_elem = self.wait_for_element(
+                (AppiumBy.ANDROID_UIAUTOMATOR,
+                 'new UiSelector().className("android.widget.EditText").instance(0)'),
+                timeout=10
+            )
+            email_elem.click()
+            time.sleep(1.0)
+            self._dismiss_gm_popup_if_present()
+            email_elem = self.wait_for_element(
+                (AppiumBy.ANDROID_UIAUTOMATOR,
+                 'new UiSelector().className("android.widget.EditText").instance(0)'),
+                timeout=10
+            )
+            email_elem.send_keys(email)
+            print("login: email escrito")
+        except Exception as e:
+            print(f"login: email por index(0) falló ({e}), reintentando tras dismiss")
+            self._dismiss_gm_popup_if_present()
+            time.sleep(0.5)
+            self.type_by_edittext_index(0, email)
+            print("login: email escrito (fallback)")
 
         time.sleep(1)
         self._save_page_source("DEBUG_login_after_email")
@@ -293,63 +302,124 @@ class LoginPage(BasePage):
         except Exception:
             pass
 
-        # Paso 1: ir a la pestaña Perfil (tab 6)
-        try:
-            self.tap_by_description_contains("Perfil, pestaña", timeout=5)
-            time.sleep(2)
-        except Exception:
+        # Paso 1: abrir el menú de navegación (≡ en barra inferior o pestaña Perfil)
+        # En versiones recientes de FB, la pestaña ≡ del bottom nav lleva directo
+        # al menú donde se puede acceder a "Cerrar sesión". Intentamos primero esta
+        # vía, y si no funciona, usamos el flujo clásico vía Perfil.
+        menu_open = False
+
+        # Intento A: tap en la pestaña Menú del bottom nav (≡)
+        for desc in ("Menú, pestaña", "Menú"):
             try:
-                self.tap_by_description_contains("Ir al perfil", timeout=3)
+                self.tap_by_description_contains(desc, timeout=4)
                 time.sleep(2)
+                if (self.is_text_visible("Cerrar sesión", timeout=3)
+                        or self.is_text_visible("Configuración y privacidad", timeout=3)
+                        or self.is_text_visible("Configuración", timeout=2)):
+                    menu_open = True
+                    break
+            except Exception:
+                continue
+
+        if not menu_open:
+            # Intento B: ir a Perfil → buscar botón Menú en esa pantalla
+            try:
+                self.tap_by_description_contains("Perfil, pestaña", timeout=5)
+                time.sleep(2)
+            except Exception:
+                try:
+                    self.tap_by_description_contains("Ir al perfil", timeout=3)
+                    time.sleep(2)
+                except Exception:
+                    pass
+
+            # Scroll hacia arriba para revelar botones de la cabecera
+            try:
+                self.driver.find_element(
+                    AppiumBy.ANDROID_UIAUTOMATOR,
+                    'new UiScrollable(new UiSelector().scrollable(true)).scrollBackward()'
+                )
+                time.sleep(0.5)
             except Exception:
                 pass
 
-        # Paso 2: scroll hacia arriba para revelar el botón Menú (hamburguesa)
-        try:
-            self.driver.find_element(
-                AppiumBy.ANDROID_UIAUTOMATOR,
-                'new UiScrollable(new UiSelector().scrollable(true)).scrollBackward()'
-            )
-            time.sleep(0.5)
-        except Exception:
-            pass
+            # Tocar el botón de menú en la página de perfil (≡ o ⋮)
+            for tap_fn, args in [
+                (self.tap_by_exact_description, ("Menú",)),
+                (self.tap_by_description_contains, ("Menú",)),
+                (self.tap_by_description_contains, ("Más opciones",)),
+                (self.tap_by_description_contains, ("opciones",)),
+            ]:
+                try:
+                    tap_fn(*args, timeout=5)
+                    menu_open = True
+                    break
+                except Exception:
+                    continue
 
-        # Paso 3: tocar el menú hamburguesa (content-desc="Menú" en perfil_fb.xml)
-        self.tap_by_exact_description("Menú", timeout=5)
+            if not menu_open:
+                raise Exception(
+                    "No se pudo abrir el menú de navegación para hacer logout. "
+                    "Verifica que la pestaña Menú (≡) o el botón Menú del perfil existen."
+                )
+
         time.sleep(1.5)
 
-        # Paso 4: scroll a "Cerrar sesión" y tocarlo
+        # Paso 2: scroll a "Cerrar sesión" y tocarlo
         self.scroll_to_text("Cerrar sesión")
         time.sleep(0.5)
         self.tap_by_text("Cerrar sesión")
-        time.sleep(1)
 
-        # Paso 3: diálogo "¿Salir de tu cuenta?" → SALIR (aparece primero)
-        time.sleep(1)
-        for locator in [
-            (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().text("SALIR")'),
-            (AppiumBy.XPATH, '//*[@text="SALIR"]'),
-        ]:
-            try:
-                btn = self.wait_for_element(locator, timeout=5)
-                btn.click()
-                time.sleep(2)
+        # Paso 3: manejar la secuencia de diálogos post-logout
+        # FB muestra primero "¿Guardar tu información?" y después "¿Salir de tu cuenta?"
+        time.sleep(2)
+
+        # Fase A: "¿Guardar tu información de inicio de sesión?" → AHORA NO
+        for _ in range(12):
+            if self.is_text_visible("Guardar tu informaci", timeout=1):
+                for locator in [
+                    (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().text("AHORA NO")'),
+                    (AppiumBy.XPATH, '//*[@text="AHORA NO"]'),
+                    (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().text("Ahora no")'),
+                    (AppiumBy.XPATH, '//*[@text="Ahora no"]'),
+                ]:
+                    try:
+                        btn = self.wait_for_element(locator, timeout=3)
+                        btn.click()
+                        time.sleep(1.5)
+                        break
+                    except Exception:
+                        continue
                 break
-            except Exception:
-                continue
+            if self.is_text_visible("Salir de tu cuenta", timeout=1):
+                break
+            time.sleep(1)
 
-        # Paso 4: diálogo opcional "¿Guardar tu información?" → AHORA NO (aparece después)
-        for ahora_no in ("Ahora no", "AHORA NO"):
-            try:
-                btn = self.wait_for_element(
-                    (AppiumBy.ANDROID_UIAUTOMATOR, f'new UiSelector().text("{ahora_no}")'),
-                    timeout=3
-                )
-                btn.click()
+        time.sleep(1)
+
+        # Fase B: "¿Salir de tu cuenta?" → SALIR
+        salir_done = False
+        for _ in range(15):
+            if self.is_text_visible("Salir de tu cuenta", timeout=1):
+                for locator in [
+                    (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().text("SALIR")'),
+                    (AppiumBy.XPATH, '//*[@text="SALIR"]'),
+                    (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().textContains("SALIR")'),
+                ]:
+                    try:
+                        btn = self.wait_for_element(locator, timeout=3)
+                        btn.click()
+                        time.sleep(2)
+                        if not self.is_text_visible("Salir de tu cuenta", timeout=2):
+                            salir_done = True
+                            break
+                    except Exception:
+                        continue
+                if salir_done:
+                    break
                 time.sleep(1)
-                break
-            except Exception:
-                continue
+            else:
+                time.sleep(1)
 
         return True
 

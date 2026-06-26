@@ -7,16 +7,8 @@ from pages.base_page import BasePage
 
 
 class NotificationsPage(BasePage):
-
-    # ------------------------------------------------------------------ #
-    # Constantes
-    # ------------------------------------------------------------------ #
-
-    # Botón de la pestaña en la barra de navegación principal.
-    # content-desc real: "Notificaciones, pestaña 5 de 6[, N elemento(s) nuevo(s)]"
     NAV_TAB_HINT = "Notificaciones"
 
-    # Indicadores de que el panel de notificaciones está abierto.
     PANEL_INDICATORS = [
         "Notificaciones",
         "Todos",
@@ -24,7 +16,6 @@ class NotificationsPage(BasePage):
         "Sin leer",
     ]
 
-    # Textos que aparecen al estar sin conexión.
     OFFLINE_TEXTS = [
         "Sin conexión", "sin conexión",
         "Sin internet", "sin internet",
@@ -33,17 +24,12 @@ class NotificationsPage(BasePage):
         "no se pudo cargar", "No se pudo cargar",
     ]
 
-    # Indicadores de pantalla de configuración de notificaciones.
     SETTINGS_INDICATORS = [
         "Configuración de notificaciones",
         "Notificaciones push",
         "Sonido", "Vibración",
         "Notificaciones de",
     ]
-
-    # ------------------------------------------------------------------ #
-    # Navegación
-    # ------------------------------------------------------------------ #
 
     def open_notifications(self):
         """

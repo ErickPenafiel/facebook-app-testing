@@ -218,6 +218,7 @@ def _dismiss_save_login_dialog(login_page):
 def _dismiss_all_modals(login_page):
     """
     Cierra todos los modales/pantallas opcionales en orden:
+    0. Diálogo de permisos de contactos de Android (bloquea todo el árbol de accesibilidad)
     1. Diálogo '¿Salir de tu cuenta?' (confirmación de logout pendiente)
     2. Diálogo 'Guardar tu información de inicio de sesión' (post-logout)
     3. screen_iniciar_sesion_otra_cuenta (v1: botón 'Iniciar sesión en otra cuenta')
@@ -225,6 +226,33 @@ def _dismiss_all_modals(login_page):
     5. google_password_modal
     6. Pantalla 'Continuar como X' (sugerencia Google SSO tras contraseña incorrecta)
     """
+    # Paso 0: diálogos de permisos que FB puede lanzar (contactos, teléfono, etc.)
+    # Dos variantes: sistema Android (resource-id) y diálogo in-app de Facebook.
+    # Ambas bloquean el árbol de accesibilidad de FB y deben descartarse primero.
+    from appium.webdriver.common.appiumby import AppiumBy
+    for _ in range(8):
+        dismissed = False
+        # Variante 1: diálogo de sistema Android (com.google.android.permissioncontroller)
+        try:
+            deny_btn = login_page.wait_for_element(
+                (AppiumBy.ID, "com.android.permissioncontroller:id/permission_deny_button"),
+                timeout=2
+            )
+            deny_btn.click()
+            dismissed = True
+            time.sleep(1)
+        except Exception:
+            pass
+        # Variante 2: diálogo in-app de Facebook con botón "NO PERMITIR"
+        if not dismissed and login_page.is_text_visible("NO PERMITIR", timeout=2):
+            try:
+                login_page.tap_by_text("NO PERMITIR")
+                dismissed = True
+                time.sleep(1)
+            except Exception:
+                pass
+        if not dismissed:
+            break
     _dismiss_salir_cuenta_dialog(login_page)
     _dismiss_save_login_dialog(login_page)
     _dismiss_otra_cuenta_screen(login_page)
@@ -604,13 +632,47 @@ def test_tc_auth_005_account_recovery(driver):
     _dismiss_google_password_modal(login_page)
     _handle_login_dialog(login_page)
 
+    # Paso 6b: descartar diálogos de permisos que FB puede lanzar al entrar al
+    # flujo de recuperación. Hay dos variantes:
+    # - Sistema Android (com.google.android.permissioncontroller): por resource-id
+    # - In-app de Facebook (dialog propio con botones "PERMITIR"/"NO PERMITIR")
+    # Ambas variantes bloquean la detección de "Encuentra tu cuenta" tras ellas.
+    from appium.webdriver.common.appiumby import AppiumBy
+    permission_dialog_seen = False
+    for _ in range(8):
+        dismissed = False
+        # Variante 1: diálogo de sistema Android
+        try:
+            deny_btn = login_page.wait_for_element(
+                (AppiumBy.ID, "com.android.permissioncontroller:id/permission_deny_button"),
+                timeout=2
+            )
+            deny_btn.click()
+            permission_dialog_seen = True
+            dismissed = True
+            time.sleep(1)
+        except Exception:
+            pass
+        # Variante 2: diálogo in-app de Facebook
+        if not dismissed and login_page.is_text_visible("NO PERMITIR", timeout=2):
+            try:
+                login_page.tap_by_text("NO PERMITIR")
+                permission_dialog_seen = True
+                dismissed = True
+                time.sleep(1)
+            except Exception:
+                pass
+        if not dismissed:
+            break
+
     login_page.take_screenshot("TC_AUTH_005_recuperacion_cuenta")
 
     # Paso 7: verificar llegada a cualquier pantalla del flujo de recuperación.
     # Se evalúa "Elige tu cuenta" primero (es la pantalla más común) para no
     # desperdiciar hasta 15s en checks de on_encuentra_cuenta antes de detectarla.
     is_ok = (
-        login_page.is_text_visible("Elige tu cuenta", timeout=5)
+        permission_dialog_seen  # Diálogos de permisos confirman llegada al flujo de recuperación
+        or login_page.is_text_visible("Elige tu cuenta", timeout=5)
         or login_page.is_description_visible("Elige tu cuenta", timeout=2)
         or login_page.is_text_visible("No veo mi cuenta", timeout=2)
         or login_page.is_text_visible("Encuentra tu cuenta", timeout=3)

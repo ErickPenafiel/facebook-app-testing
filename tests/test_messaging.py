@@ -76,6 +76,32 @@ def _is_in_conversation(messenger):
     return messenger.is_in_conversation(timeout=5)
 
 
+def _dismiss_conversation_overlays(messenger):
+    """
+    Descarta overlays que FB muestra dentro de una conversación:
+    - Aviso de cifrado E2E ("cifrado de extremo a extremo")
+    - Cualquier modal con botón "Aceptar"/"Listo"
+
+    Si después de descartar el overlay la app navega a la página de
+    detalles/info de la conversación (se detecta "Silenciar" o "Apodos"),
+    se presiona BACK para volver al chat.
+    """
+    for btn_text in ("Aceptar", "Listo", "Entendido", "OK"):
+        if messenger.is_text_visible(btn_text, timeout=2):
+            try:
+                messenger.tap_by_text(btn_text)
+                time.sleep(1.5)
+                # Si el tap de "Aceptar" navegó a la página de detalles,
+                # volver al chat con BACK.
+                if (messenger.is_text_visible("Silenciar", timeout=2)
+                        or messenger.is_text_visible("Apodos", timeout=1)):
+                    messenger.driver.back()
+                    time.sleep(1.5)
+            except Exception:
+                pass
+            break
+
+
 def _has_login_form(driver):
     """
     Devuelve True si la pantalla actual muestra el formulario de login
@@ -207,6 +233,9 @@ def test_tc_fb_msg_002_envio_mensaje_texto(driver):
     messenger.open_conversation(contact)
     time.sleep(2)
 
+    # Descartar overlays de FB dentro del chat (ej. aviso de cifrado E2E)
+    _dismiss_conversation_overlays(messenger)
+
     # Verificar que se abrió una conversación real (input de mensaje visible).
     # is_text_visible(contact) es insuficiente porque coincide con el texto
     # ya escrito en el campo de búsqueda.
@@ -312,6 +341,8 @@ def test_tc_fb_msg_004_estado_mensaje_enviado(driver):
     time.sleep(1)
     messenger.open_conversation(contact)
     time.sleep(2)
+
+    _dismiss_conversation_overlays(messenger)
 
     if not _is_in_conversation(messenger):
         messenger.take_screenshot("TC_FB_MSG_004_contacto_no_encontrado")

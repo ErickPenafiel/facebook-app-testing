@@ -158,26 +158,35 @@ class BasePage:
         Usa UiSelector().instance() que busca en todos los accessibility windows,
         incluyendo cuando hay popups de sistema (Google Password Manager) activos.
         """
+        from selenium.common.exceptions import StaleElementReferenceException
 
         if value is None:
             raise ValueError(f"El valor para el input #{index} es None.")
 
-        element = self.wait_for_element(
-            (AppiumBy.ANDROID_UIAUTOMATOR,
-             f'new UiSelector().className("android.widget.EditText").instance({index})'),
-            timeout
-        )
+        locator = (AppiumBy.ANDROID_UIAUTOMATOR,
+                   f'new UiSelector().className("android.widget.EditText").instance({index})')
 
+        element = self.wait_for_element(locator, timeout)
         element.click()
-        time.sleep(0.5)
+        # El autofill picker de Android refresca el árbol de vistas tras el click,
+        # dejando la referencia stale. Re-encontrar antes de send_keys.
+        time.sleep(0.8)
+        element = self.wait_for_element(locator, timeout)
 
         try:
             element.clear()
         except Exception:
             pass
 
-        element.send_keys(value)
-        return True
+        for attempt in range(3):
+            try:
+                element.send_keys(value)
+                return True
+            except StaleElementReferenceException:
+                if attempt == 2:
+                    raise
+                time.sleep(0.5)
+                element = self.wait_for_element(locator, timeout)
 
     def type_by_description_contains(self, description, value, timeout=10):
         """

@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">report_web.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">report_web.html</h1>
+    <p>Report generated on 23-Jun-2026 at 10:26:27 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">7 tests took 00:32:23.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" >
+            <span class="failed">1 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">6 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" >
+            <span class="skipped">14 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.5&#34;, &#34;Platform&#34;: &#34;Windows-11-10.0.26100-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.0.3&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;html&#34;: &#34;4.2.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}, &#34;JAVA_HOME&#34;: &#34;C:\\Program Files\\Java\\jdk-21&#34;}, &#34;tests&#34;: {&#34;tests_web/test_auth_web.py::test_tc_auth_001_login_valid&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_001_login_valid&#34;, &#34;duration&#34;: &#34;00:04:25&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_001_login_valid&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:04:25&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;web_driver = &amp;lt;undetected_chromedriver.Chrome (session=&amp;quot;93d284a6d3a0c2c5adb92b09aa4a833a&amp;quot;)&amp;gt;\n\n    @pytest.mark.auth_web\n    def test_tc_auth_001_login_valid(web_driver):\n        &amp;quot;&amp;quot;&amp;quot;\n        Verifica que el usuario puede iniciar sesi\u00f3n en m.facebook.com\n        con credenciales v\u00e1lidas y que se redirige al feed principal.\n        &amp;quot;&amp;quot;&amp;quot;\n        login = LoginPageWeb(web_driver)\n        ensure_logged_out(web_driver)\n    \n        login.take_screenshot(&amp;quot;TC_AUTH_001_WEB_formulario_login&amp;quot;)\n    \n        login.login(get_env(&amp;quot;FB_EMAIL&amp;quot;), get_env(&amp;quot;FB_PASSWORD&amp;quot;))\n        time.sleep(3)\n    \n        is_logged_in = login.is_logged_in()\n        is_2fa = login.is_on_2fa_screen()\n    \n        # Valid credentials produce either an immediate login OR a 2FA/passkey challenge.\n        # Both are positive outcomes \u2014 invalid credentials show an error instead.\n        is_ok = is_logged_in or is_2fa\n    \n        login.take_screenshot(&amp;quot;TC_AUTH_001_WEB_login_valido&amp;quot;)\n    \n        if is_logged_in:\n            from utils.cookie_manager import save_cookies\n            save_cookies(web_driver)\n    \n&amp;gt;       assert is_ok, (\n            &amp;quot;TC_AUTH_001_WEB fall\u00f3: tras enviar credenciales v\u00e1lidas no se obtuvo ni &amp;quot;\n            &amp;quot;inicio de sesi\u00f3n ni pantalla de verificaci\u00f3n adicional. &amp;quot;\n            f&amp;quot;URL actual: {web_driver.current_url}&amp;quot;\n        )\nE       AssertionError: TC_AUTH_001_WEB fall\u00f3: tras enviar credenciales v\u00e1lidas no se obtuvo ni inicio de sesi\u00f3n ni pantalla de verificaci\u00f3n adicional. URL actual: https://mbasic.facebook.com/login#\nE       assert False\n\ntests_web\\test_auth_web.py:39: AssertionError\n\n----------------------------- Captured stdout call -----------------------------\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_001_WEB_formulario_login_20260623_095418.png\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/login#\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_001_WEB_login_valido_20260623_095829.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_002_login_invalid_password&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_002_login_invalid_password&#34;, &#34;duration&#34;: &#34;00:04:11&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_002_login_invalid_password&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:04:11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/login#\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_002_WEB_password_incorrecta_20260623_100241.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_003_login_unknown_user&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_003_login_unknown_user&#34;, &#34;duration&#34;: &#34;00:04:52&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_003_login_unknown_user&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:04:52&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_003_WEB_formulario_login_20260623_100244.png\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/login#\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_003_WEB_usuario_no_registrado_20260623_100732.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_004_empty_fields&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_004_empty_fields&#34;, &#34;duration&#34;: &#34;00:00:35&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_004_empty_fields&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:35&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_004_WEB_formulario_login_20260623_100735.png\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_004_WEB_campos_vacios_20260623_100807.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_005_account_recovery&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_005_account_recovery&#34;, &#34;duration&#34;: &#34;00:00:18&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_005_account_recovery&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:18&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_005_WEB_formulario_login_20260623_100810.png\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_005_WEB_recuperacion_cuenta_20260623_100825.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_006_logout&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_006_logout&#34;, &#34;duration&#34;: &#34;00:01:21&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_006_logout&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:01:21&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n[cookies] Loaded 12 cookies\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_006_WEB_main_fb_antes_logout_20260623_100913.png\n[logout] UI logout failed \u2014 clearing all cookies via CDP\nScreenshot web: reports\\screenshots_web\\auth\\TC_AUTH_006_WEB_cierre_sesion_20260623_100946.png\n&#34;}], &#34;tests_web/test_auth_web.py::test_tc_auth_007_session_persistence&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_auth_web.py::test_tc_auth_007_session_persistence::setup&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_auth_web.py::test_tc_auth_007_session_persistence::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\test_auth_web.py&amp;#x27;, 195, &amp;#x27;Skipped: Requiere aprobaci\u00f3n manual de 2FA en el tel\u00e9fono; la URL two_step_verification expira antes de poder automatizarse.&amp;#x27;)\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_001_acceso_mensajeria&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_001_acceso_mensajeria&#34;, &#34;duration&#34;: &#34;00:01:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_001_acceso_mensajeria&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:01:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWRcEufjyj9xhcPbGPzwOrIGyoLRVUkicEDfZHDu7Ck7e1l2nutjqN9XdnaVkoRda3CV5qaw5Uj4SMRSE-FfrCsT3Y7f1sdy15Miy_zCRnb8Vi5hTDZtcx5LF--NV3LWXE_6RwDMSgPWlQtFbRWsng_Llbn_u91TXV7LveqV4AUjl0mmuQm_WNizOpqFYn45Hs02DxbuKNZV3vTq4AKVd92sdZ0apESm8PsKaDVWgRVlPc94HwtyQUBqIRcrywoV9XmACFD-zxbFIzOmijEsDpdC3e3BRF1sIcuqM7_uQCrmxHKuYaa4v8nfW0MOAIpRY-jq7LwZ3PBuSvVz0FRfWbb1R9bIlXrxvzt32AO1r4C48YFbxYf2quyG1MUEf1ceO5kD3hEVFesj0IlEGqaTvCC-HO6zvXZf-krJqvWJfGFrUCeIeNV-zZRXpRm4h1bLO-JqPBwewgBe5xR9_SHX_5XocaRWkp5KgdzrVRFKqmpJqQ0CNNpdO6qVDpFRtBBsV2H1fauHBiiVEmWyeZ3XVEyosGmvKEQ-BAdpXyKv2zS-dtxDX-YPYGob5m6vg1OTC8Rpk4p1R_03LCGMthXr0-fpBfdzgQtDfyp1PIambuG2QEPe1rbI13F_ybRojSCIMU41j_gNgRWsXuIl_sht-LaD7_UdDmiv5K5hAhy7TXL9sxS9gkKnWlYSQNqV-lWqCRhCq60UWmMnUBqMRuo0H3mVYWBvfCXFgE0isL_DLJNbC_CyDMQpKqt-P7yT-FpvTBX0qVGmUhin1Y3lCj6Ezlbhdk8x9GGnYnpPRW_Tcy52h159aPgTgCBy0R-431G1zOOF7fywgRcAiBp1jn_ZhbQqRQ4ydnVYiR7NmfO8te1IWotr4RxdGW_x4L1MNOWhsiPsSfnO9twJ1NVon8WRnWnou0L5bMx7wPCC2_HBTfbcZUE-RGDT2-Blmmh96fkfvk24hLcAylGBov7aiUNjYGxVvh0Cue_iZskWMWd62huYnh8hZ9GfGEnNu9wBjKvOqXs00Stq5q1gDzKrXnXz1Y2LKN6wvLM1uFO5sMXKnikQF1ae35xx_2nskwYu3UQkhNMLJL8-ViL8LJE-ja3KBq-hcCL5N5k24thBOfGWBVQERxHUxy1D1nJQLptEgQqTa8SGPBi_i_dqCwS8odCI-nvHGbzcvvwgvOh9UT3-tzdNpwgj3ecFcddXXoS0ycaFLD1xpJrGsUtHgN2DU2WXgz8jfYbYKe4Ww4hbUpWFmet5RoRZWEod47EDACOfQCueSu9GDPBmzZz_6ll1CUPHbLiZOubzKABPfAFB0VQLRLzu2o1z1rJdOIdNo0P9kbV_cSjM6kv3U8Ej95h08_WNECuR0NVg4S0OZy3l28gCSrbnHiF-7DltaNd91XI3o2OtpocIlytSXryMLSKLJ1Vm7xNWYVtXhXlUjJCkpgm-dKCnURs3BLf-n-q8k6ZjcG_JqlOv4g6cSwGaHxtCYACzjQCKUEx3mAUbsE1ER81FqYMlyY-VwYyRtSn2qzvCKLTa7tdGTfhQqOKhoDg56SI&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_002_envio_mensaje_texto&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_002_envio_mensaje_texto&#34;, &#34;duration&#34;: &#34;00:00:54&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_002_envio_mensaje_texto&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:54&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWRxVj6QQuBhIe00cKh6iahYIK7XPr7Wd4vHCSKT4_KZRV6B26IeEr6cpH2L4o6cEw_5gcC6OLN9nuk0ItA3I_ISoy49gYuNNZgZUTiNs6wwKW5GN3KBEjpNBDzFfUqS1Aglyzj1KXgROAWFuAXgL-lnspGv4Q1qECMGabv9KXUsoO9U_xMto5YbYvoUSBNlURMz6DN0XLVXJswFkzGh7U60rro0jdLviMTr47ljU7OhBKRFi8N9NsUdYinTzp0kMdV3EGXKrHUBRVNbNALWelFCg1u8GPuQjOMtEoVHM84g24Yo6NlndxxyoAV7V2ThJdE1jNoK_IpxHgtnDd28nofZ5UPKQlYpXiEm3NKDzVB_f8RSFF96frunIbTWAuF0Pk64Dxgc8AcpdMwu9EIXzIGGVRnzpMc-7qZBVxP2uw06FvDCgDFfgM20gjPLg7Pwa4g0C2blstwceZmHfQywRSWttXW2smLDPl5jlh22qZ8IbflFrQPL3u-Kk_FSUsnJWaBFVYHQHZoeFe8SkyBOZZn2UfYFIt72xH2mXgeEKS4zYkYxzqSj8B_RwtmxqLJrYKui4WxP59el-0nqUGzD5eWQ-UaddyrJmT_eci9hNxIk1U5OXYnuaZJ0JyERmHnZyBIAaZbTmWtYKm-25bDdmU1i9avKxhm8FVKlGy_8IJQsq4ML4dLyxGPmEpnwDQe0SFkrQ_rz02QWlBqjHJJAuerV__EVYzrUXPiukISHYP4T8ihiCYY4y0lHZq6U0xWgvnCHFmxEXxTxKm3F7AO81GD5bxXTltK9IM5OabfvAOKoAoRlX30onLSVMBB3sTvs7h7KhaSTfnDs8qtOBmMP5OUJpZBAkFvfjEy2SjRqsgUik1WBrwhiTx5JXlYojPedqx1Ro_f1UHCPrsWci7k0Y6BRwDvAgqWMXzLd5Q-aDnorcgxlstMaqHMwNE6RlyGhsWgPGWuxVhMVp239mo5JoR9HkPCHkK0LdhrnZOxF0Ih1SrIAkDwcbXMg8cRABiZx2zDoCJ0JfzL5vYt-7UHdJBYaL2O58CGmNEmIUT7a7slQTxAl-Vl8vdzAGMbS6esda9Rr39PNXUt9KFe-we6SUoKbZWyNvLnYx24ygWX7bTdF0vZsnwjFnODRUP6jRjXr0RDgmikondF3VIcigAqHOVortapOmz5VguYqp9qRAP1WuyfoUqXKh3f7US23Kq1WbF_PfSwK00Bwl_RFOLM70DrSm-vqn2IohPoyQxxfm_hMt_fuJWAp0wARoaNdxIn4ypxp2ifbccLfTDroXrjfsyjnQlmnmYanise7INrnC4S8cNTBgL3Zho3NT_Qz5lVzGkLG3IKpmk2oF8gILNyZGJj5WXWh_vhiimCYiasWqBIsrL17fzyI9pooULO0EHl-ASRg_2PN91-Iqv5VgvMGX5r_l35DJlvfIiTVODEx8w8JYiVkw0U6zl6Y-8MX39sGA_xFw-JZkb2fE3lAOx1z-gHiw1k2NOGBVcELgFjgd-N2F4ZkV4goru-UalLCVo4PilXIPSv-OgQzbF93&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_003_recepcion_mensaje_entrante&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_003_recepcion_mensaje_entrante&#34;, &#34;duration&#34;: &#34;00:00:54&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_003_recepcion_mensaje_entrante&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:54&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWSaR5DMURUi0_qJAPTO2phpwv_Vegq_c5qsp4WdP3fLijJRyxMW3ci46e7mZem_oGV8M81bESAjcK-oZ8rezwFrpCRiNCgtWB2JJ9Rv2pjIhSoFMNfh6a68K0QUEfV6qJdek8lWTiVgx5e3Ae4waqHtjCYE5ayYpu2y7tCrn_cpJ_u3EsgWKnVxOX-BKxS6jH0hOI_IvTgcALUaiqEfvULt05IDJ8Q2ie8sfanq7bzgg89TCbAcuqBVAG5uMuXDjQQiTaHujijgmK35RjD19zfAUxAcvIL5p5lEJbUKpcPh4x1ZU79nUG3zWjNW0axViLIiAH8WQSCO97gpgMlK-N7uagNw51bDvHJoon9hVqtwyWgE_OTFnqH6VWpT0CQ9yRGWlm6kkBt6HBqHMnqWxriu018gzA22CwP4S1lGzOYH3XZN8AlSMpdQa1TA2m6UIyfI85IZxkePSdJQY0aqfi9MRUH6wWU4zG-VLQWjGIALyKNm2x-OMUjrgE1kUw6B061t8JtZmVAGWuJUJvLizBABcBS6zlLVLNWpDFAhD6TBm4tJ3hsI96Yh3BOQoiNYym7-32dG8rGQT_ytbSCDu4nJpMb2zaDyzpj97B27-E-pidivh5o7IUnk4rfJMJEcc-idHrRr3dxxSSOLDpEP6YMvBy8mQxzvqs9jWV5o3krjqcjGUH1kldILSE4_o8FErFeavjOFgF2fy94jKYIilcZjyYSSrc0jtpveWz7MAp3-COyGR4wCkpGjdglhlbPdyAa-SLDw_GgXBoar4FePVydrxEYSjwes8yfVtivi-KV63jbn9P5KOV70B9HKI-ID4si9xL3gZ2b8kBXVdNgdUoc0CPlfImOeVFDC1PiOe_JD_o-p9SFSyOHVnig9fOneZY99OTQg98edyLzyIE37XZLG1oMD6rJr87sdYHVyTRLsC5SryQrfcTd0n-JXeMRbfIJV2EOcBYlRPbNt79qGngWy4-EMjQOTQi7Vdya35On9F15U4r9PpKIDOougDEmqmbOjNb7j-gar20HFmTgFKhnoB36fJBxAjy9vAM5z5-04a1P9E3xb3UHsz6y1ev9VJtzXc2X59avOZsc8xwMZCjEaHOMapcG1fZGmvDnEbvO_YqFJrWzxLYUyMMZIiw96r0Kc6M72xmedVjF9Q0IfXhEUKIyOyPpQr_63GUhOstelq_ZXoITdE7KyhS3vCMU5J1XV3Y1lsKJuYSfs9eKjRIQUqNbsbuUgio9EeCthSOEuwiiqAOgYH7Zg2pAro0LNa5s6pHYjV0v6bI1rbBjdMYilnHEAGv34QyzFKaJ_O6C-PTtfvrk6ev1ZuUGHOgGHOsevVLTPmYNZ_EJmOg0pFxxnzzUibNmJEokm_fVzUeZnCFOjXek0zE7Mavd5Mukl6-ijn-HkxZ3nUwL_lSGUJej7X2FIrH6tfaCxjejYgjLGsVgyZGDDw4q4ZyLXlMKsTXuv7xDwtbA4m8M2io3oAIdd2RWwYEeoeUZYfFGmrlM091RB18imlNRaDOhpDQQZaZGwwiPlwARz9GlB&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_004_estado_mensaje_enviado&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_004_estado_mensaje_enviado&#34;, &#34;duration&#34;: &#34;00:00:54&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_004_estado_mensaje_enviado&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:54&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWRRIUBuD9lUqZz5RTUrrFvLN3_z9EzMX82kT_a6U0rQ4yfMIKoyNBeKVBlXDNInEo-jqhtdCV2NgYkhI2mRj1hN000GdSxJ1il5FYE6YtxE_EifPlh9cFQoAjeLuSNKKqnZEN9yMPWFqDyt5GX1vvJMRJrNxDWa5391dmRdShBVdfliGsxMlGt4QaX0MrTeYgwaht99vkicrrG2RDuUC15BKY_Ge1i9QpkQ3J47xs57t4_chz0l1l8hOAAlHrGHPwO-88O_K9hphYRoybII2ISy8AlUirsDtYgiykIOkjvMSy2lUN2aKq2RyMnhjJRFBT09Rr0QT9Dpl-BDZTbGYpSvFThlTnFd75S1Et9hkNAGsxy-NtzmIVLFjp1eQYfl-b6EdihN-p3hCp799E1BfJpe-330CJG21rvijhiOp2mPhWCh8abOMbXarToueS0ewewVxUVOjbj_qsSQj9qmUmK-6YZEjqrxbcyZwCSN-RhhRGAAMDzrq5QPIm5w61lhEj7nNhGk2_3Z7QDA4vva9z3AGGVkXSOOwRwq5nQ6clx-PVljTVZMfqlgxYAIpAhhel2aA_ix0r1JOPWO9CyzPhilXwfekn_XSeiW-1FC0fm4SEN9Jk52cj1W2sdVWbAIxFUnIukWnneHj4De3gLC0Q_b3PuLmTfyRxUDyyDZtWrUnwKj6aPDCQifzzPoGhMrQOMfzsmrLAq28MXVrJktQULrErBwkt0gcfYdRCtjGISSqdnYheolFwjb9JY-XZpWQ1-LxxQ3Up4Mj62eih7hx2FHJvIXF3nZapNVHXqyba48ZL6Vq-4FQKDX0jZUY5qJBBQK2i2xviYtfrJiPG3tiVjDM7G0K0yjwviwac-4y0pOPHxT9HGHgRSMnUv2wP9aXqxS0jWXhDPlUYzkuGRDxOLaAatd5wRoQJxGtGAvbfcUKPH8upqZZIRM5nAy0QKJ1ruBT6ziybfw_fM0fCMmgmfZgFhiZt6TzvfBqghPDvN7gr2YNMGXWWeu9DdK8HJ18KUkJdHymZz0CmgeYCaZHKrZJxfeIOxwI8qST8ED5fyKKaxBf6EhuHD5h_KKITGmoESaFlD6aNT-knXPJxYOKOabtSVLd8WSb8VJexds5XjmVcY9CZjqD7BNyI5Eq5l-GbGt1nldMGFz9ILxFCCI_NqbMxvn161KbAlTmtYAHdmjMSUJClSeZ5SZh_6GvBLVpQWWtlmNzy952cKGDlyqqmaIL0Zxlc5A6pKqgv8vqgqPalXTcpu9xm02vv96L9rCktUsUopSchSc-Fn5-pysKn9AVBk2zRsMNJOcRWYs4jd6JDpgptXNpYBNx7b303d6ekzu7xLMTlJFtsVt7tKgEIKKenMGal8VCiIJttPcSlwNr6N5VjFlCvkKGvXwK_GyKkYldqRRX_dqltCKki42kzZlNb-CsnMFEIRyfhIMbTmlZWJc8QAy4y84gJrJFnA_qC_xWvSSRN1v4Tgvzpi1u62Jh6r2wuMSC825xo4kOGEeszfInSo80NNLVCMk1cfj30gSSBH7X29tvA&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_005_envio_sin_conexion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_005_envio_sin_conexion&#34;, &#34;duration&#34;: &#34;00:00:55&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_005_envio_sin_conexion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:55&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWSlISpWkkfrCVAm6lrq_DiCxYZwm9mwegicK6zAhbjoOMOU-A0nKvJJfrrWHHcRqWMTJ8bAVXvXz8Uqbbn583YqqKjWAVIyIWcnCMR8QWRye7Y0BKWDkxJuIMMAEGL78lE1fg0tzFt-RtIEKgyVn_8_rA3Zt7JiutEbvANtONwQ_T1FMKChHlYJ8zwzXRHt2z-nqyeo-6jnuFB929chaFEY3rOxDrM47Qo4j9MyJUBwkhsnTbNjVdSkzqdZ4loEiv5_8pvXWakHFXXVOigdvRVABVLYD-6RkJG6Y6WAXNB_d-RCus3Q_LaIIQE6MzBw-egXc8xSbl9GettcKrgiwU96S97Bnz908rA93gfYVg9NB-z944YVciZAc6kv6tyNshCpZQzhWIklfzyCaqiGgrBBDMqc-aTpZnjEuMnTlZONes-WHXf7gg2Fg7JWer6Mdw1vigEiP55jJAOGPTfby72USB3dMav1QikDG62L-fZDnVlqBaFW2kIHAQ52KbZ0rLspArvMj8MTGorWqLd8J-W9SfAJ9OF5gM-f4pikEy7rXV0YhNlucGfYlqXUIFwykHhEMdJzfv9kWCL7zHhkFiUtpXTbiBVmiJS3Aq4Tfjq_-5OgsgSTQSRwCpzrqmFzt-rGhXDwMClI3CngRfaLtpcRSww8u9CYtdRhO6Hnmc2K6xLIRtOOUSKMefZPw2Wg3NBT-FSM_8NJDBtHccMdhttW1c6ODSQmnEEtKfq5-41pxcmFGPmt2rO60w-y1uMJPJGAeomBerCAzZluBpprh19jdeDFw8avIhw1qqD5BOpnAlrSfX_4Nv46CGPL8UjFqaFd8Rn3lYhpIaoBO6Ckcqq4Sqwb9ouHIpzRdrNPVg47gvtI1ukQYGS3M4y1z24bZFL-1_z6SV8rwIaYZVhmV4IekriGbeT3a2zy8OEDXiPF59wJnosPAjvJQJ2DEBVhzeRPBj--y69jZeOG-uQ94tWkrCr7A_M6XZMkw-ndUVurxnTGBmcb4R26rzHEyPBjzaEvisn0Wxr09G4cOWTPmqKqRB0zDCkNVfLx1e7w5snSurT0-QI7Ng4hdt6VaVms5IivRA8YAiv-BuQ4y15lERoT1iuA2OqSKGtV74O5Q6at-ebDJV3rAIoZLCsLAm0XAMnlinS4K9QnCH7v7yC__yB66ZnhvLXfKHgHSGmgxUXKHvZaxX7GLZblp4D6N5500jKPdhtZ73BAeIISLRasLr64RI0Ghn8xOlP1EsdO3IN25ppQojcZom03hL9Bb3vLNk5aZOqPaxhCzoIyWPHRlZnnsKE6eQCfgn_TlCsYJqD7QsdWrkUWGMSh9wnW1mZyF6pmVuZw95ksWGepWSYcYfhEEhyczE-B-t4Q1UVukOFA6h6HZDFcwZwscpqxj38gchKBxf-x2fd6wVVE2GAWuQWqseyWg1S_iNE-QoHYmALCCu35ApDb8E74tFUV9UHkIkKu0zW9DshYr05H7eH44pWewbZQRsi5gDOyQfj_eiagYjkuT12qtvIHsrO9XBJGltCkOVuHWyHy5w&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_006_busqueda_conversacion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_006_busqueda_conversacion&#34;, &#34;duration&#34;: &#34;00:00:56&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_006_busqueda_conversacion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:56&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWQffC7HyhhMjF0AQ5y4bh3v7HD5wT7zhL4ksytYWLW8Ttqx9-ePB1sR_jue9ldDZ0FOOqTiY3FsQzHVEQvOOZpBFrGKjhWCtXenCVrcKmTYK6kM-Qe6vuU1uY70EBy2Ab-KAz3PBsiKSUBlF3qSG0RY6ymNYrvFx9yGu46YzvYATsZgYJXS6jbTBmHe-kdjGMe2Wfn8_8fK3_4JSEk7a4P-8c3vSAZQKik30DsFqumNSKMvKflpxSIS_ozQbidQPD9MzgZqHjqADvkD7LYgVKtzc4pSKtEaNetogcBG5VUMSKbumYWSLKeb71B1A7Xb-gabQ3vCPIZREW9nwuHFzH4F1NOn9vgGIFbLHAaxNeolPZ070qSjQAsnJ5ACIcfKpyHzrMFiMuaLW0Baul73NabN6oysteKspObcSt0A7PlSdG0kbIaBF_EmLlKorAEkI-CWxnyj4t_gVJXe2t96ftzibF01hkYzoqyONGgGeHgqw-5Vk9ZaCIBM-y5KNDXorRwxwJGdDLxSNJ8bolumLZH6znELWoZfDy15InlwwFCOocvkLCWU6AK-YFG8tj4n3mLuWkldBvr3EAVYHNKG-8MA-8vogR_iYSTlAabNpddPXHBTHK_jv5R08q3EE9L1ftxATnJLcBEp97yRx7kKcu8gJYssyJMOC_ydKHldBTz98MVfPpBs0AjFjnL-rSLYUdobks0lhr_77X4l_YFsgzvYzglPrsJQC15XiCJhBuNeEooyTwE_Uaj-D4Qdp0vyAk0cOUuFsMiEqy3oaph9DksleL4P8dbJTkeQDkXgeYFcPAnqglb9tdQDnOaV_EH_2lhZiS64Nvxxny_9SpdyxIZnqOSt1r4PCp2RaHRNUQagD_lnps33EIUd2YMI2YcSsGy9VODUYoVISkvn9OfbQoNIVOK6yCWm27NCT6DAVNOjaOYbuWm0-_uUhgQn58R_-STSwMisMqAa25drXYiye_sBsljog4UsSFn6Uo43AgzkBDb40Vs-ULOcJQhuF80iMQTwQdt_2daP_4jioOvj8FU3zVIC_22eXK5AKn7SwgAM0iEUdZcYvP9Vwa_lUG1uvJKDnO5wo9G-C2TyiIY4wmTHFGRLvTsvL9V0Nkkr5ve2DV99WybIW7-qYJSqyiRft7KuC-rZ4C8sW8T7WaM8RbJbEoyMOI3vu7P9B7y4iZPrnFstZ3KwIpsV58rWKFPmWXpD4Lt3k5jtH57NJ83pKkOfXij9Gko9qmxL9Pb3nRVltQh7AWGmwfuXrn_yyq5vEHcU0X8LVae_EHUZ4dnRcJtBufKI5s1ZzV0XUwfd_es9k2FYbkMq1n-tOkEOh-z24L2HIklvYLwPBX-dGYVlafhD6_fRDIO8l3-GAzhFtf3wXLUNlf25azMxwiZ2TbwYHrfswvUU4KKr9XfT90jQWFOsRhlr4TppPb24Xn6WNdvHqSCwzpAQUmct6Xn8kckOeSFuH5jWr_sYZgXRE7ikaiwy67uhExIkV9uYOfNQ3B3wppUELCJ93aFAYPdQXxuCquE4eEewNR0ZkW1C&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_007_sincronizacion_sesiones&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_messaging_web.py::test_tc_fb_msg_007_sincronizacion_sesiones&#34;, &#34;duration&#34;: &#34;00:00:54&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_messaging_web.py::test_tc_fb_msg_007_sincronizacion_sesiones&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:54&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWT002IzfstnU253CaQ5d4R7fqe8h3sRF4TkUrzuh0T251WXRlWwkjXmoxMzo-0JmyvK_uiOZ7nkAaycdI7D2Sj85AjcX53Q9EK4xXx06KCTP8hIG7JA0mqU0pjLHop-OJLQjzogrzObbDZtArvPTpFh9I5b2dixeFSjfR6Te00kHuNVoZMBDWd-9lsahr_ruxTV5yqWJHO14fHSFE67ATObR5zcb38KnsOZqF4CVj756tDM4_pslZ_pQthvIhodxvWpFhBIBrZPkogPDpp2IvkZTjI1zfErvwjexNJK-mBZTOkaj-nBoew7KMxUjbvQy1WkszZvv_cl-2VOMzF6R2UgbEVjxyng8ZWr5PS0nMg0I_mM9yvXtwMTTSTrEW0HblIQqdOMu5xbeadlsAp-44goMS5q4MM7_ac3vQRKxHtU9iVntFeSaBiym4GzpK6wO1UwZIpezLmIh6Dj8TSbjwcsyRe6B1x5PqrJN1-wFRd5cx5vpuZGjCK4SiWR5aLeFOrDZvY6GML12ZSRMVVUCKb0OF3VekFQK7Ns0ADh-t91uKMhpF2ueNZm-JSFb45PS6sCqOYp8IVABvoRyRY8kgqRo4agxDknD73W9TDjFReKxz_6GC1FEnxvZNqDlWZPBA0UoF9iMCOz4iS5FgTD3KHk4RbLaJvcs5jyT5Mm4f5EQjKh6qOjtkEB81N3AdYbPIXv3O5eTTGv4r--Vtr0jtjxIF9_CKVltLTnT9TXiVs0sHPFueKYopWms1WTGlQC94NTEzxp4yzGt-9C2aFI8ybuN9oOLFR2KjXfcWYYrcZUjHjNXRQo15wyAIqr9CxBuQjsqa2autAEsns3cUFNEtih6mn5p0IOvoPgw29mbXaLzaNHGJFrm5oc9IHQn2VYYfNzNE3JOGDE_5zrOpf3ILER8NZ4ZbY612dVRCn_VXibk1sO_YGdTg15FsmGaoCDKdDzsWDtEINMuiEMA9JaVT6Wl1Q8rQPr1TQjixJV9rfa9M6x7jaug6_zQp-uhZvs7Fvp5XqilO5ENR9_Se9wCE7tUQhUMWV-X4htjI1DdYngSIDnfW0hw5jpoxXZAz5bRgePDiSj1ieYfv0u4x-nnK2Tl8fpCdpOetrAN3o5S0OmaNlMbrge3zDh8jhDiuLDAdInoic81dWuyhH0SIbzuesdT8YBc0phtlDY-Xo1Q7E39hXJ4Kr33K2bHvLBCYZw8gL6j_Ew25HZHa9i4R9JZ1e4n2fj1uTSaGCbWqYZUtds4D9a7HnQb1y8jbXm7D6X7blPhBSzNOX-9o9e3L5mfDY3IkHomRHw0mGii2scnoY-X2igitSFKj3YNNU7LCreR--addclX7Nt0S9TL82fDDQCdjQaOw_TMd_ZogVQzmrcPJyeWUpg037_jsyhUWZK82EmsQdtgsHsa8-7FgsxrRKcJrd0ocPotbSjskIoCKC3jYfk7QfHMG5dkkSkRx4QDd7EKRSHvIG9iwZ04KOaWufCViEiUKRST6ovLa7DOZvy0id2F8Tdu_Hcb1EDC52NGm6__4o99TbRpj8&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_001_acceso_notificaciones&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_001_acceso_notificaciones&#34;, &#34;duration&#34;: &#34;00:01:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_001_acceso_notificaciones&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:01:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWRCdMBZQ9BDW4-CvisfFUc-y-bVVeac96g_xfwSgbgrCdUagCRxaQaf0KOrz7PX5bHhCOrJddAPAPVxS4bLQytQMp3ukEaoUazOkTusGUCznoOekCPIimwMu4gVheY8Iv93CnstVw1asCu3YsE0lwxglzFVGsEwW0WZBC_Aw4E5dzDEyd1T8d83pUktmtQbTT25d9CqwssDS1a2sYGMwgHpIoe6MOyE8WTD-WW7gBR3Qx-kb6qjGLl3XD4pw8vaxt1grCBZMMvMkIusOGvm5ORnlq-s4HSpdwKqEGJ_g9wQkRaDATXjtl0Ksm1NR0rY1b_fLCvHgtKhV6NjULSxJrGjNL5mWezSUCfYItCubCe9I7mnY8A9uIN4zJj6gwoDJk6FgqxH2CI2EiBCHZi3aepnnqmaHSR0DOATTG1l-5k328IvkRbLb-3rgz5VBuF4bT9MQYkM2dJv0Z2JszoaMn9IXpYVaYZ67dcRctDWqd_RYchFPhyip6rwLfGE8boxStOXsvt9YBxvW-J995PuE41jV4wGqEeq9VTUAUW42ZFEAGlCTuSj7q39r77xVMwgkAnkeEFxNCUfiqpJ1A22GkRA1Swg1vKvdB9JMcnEavWzPOJCLaAWRL-xJpJgfRY7n3pBaFY1KlbuOFnlD7xa7RJcFtilBET_ymV-q0cYzVGFNsTTXiqbprb0ifZAfJCx42OLwrDhlDOpM9HIjkpEAIOCNr5Ysj0aXbUlMyjexITOI5rAGITv0k0Fkb0LF5REi1sEn8vRBFdLhzFHQ5dzbJwzqtyReknDVBMH-HQ0mD-89yz_blbx8ksZqtudmSB-zl_1-D97MqVzYWB5lZwat-6hKTAfEJUUt0-09W4wSXpch6prT9NW2MMHIenOjLQ4oJ5_EDRETuUdwMbTmS-8uHSowBbF52HspNpQyFvUuH2bWj8vqTuGtpBHcpr5HXf5tqseqjGW1G2tLEfKfPEUnjHIvpgFPfPjgt2g1qi8u7tPmNzXDwb6GFO_djcn82nf5gKAfyNL7vB3EBhe1isZuLTS1mg9pW4_NmVr1nVw0pygqaQqhkNHVs_c4A4FbjWbMNHi2yRz8ky7J18fOBpCp9zd2r1l02EU6jX5M71Rx_OZBC1U3Yze7FOx8diGDOfRiwl_ppsZ9MZ8kaE2TM141CWfJZhTGsg-iv4TUB5HBWUKBF89Fd8P7pWChE0BwGV0KiaIb2b2Be3vGLYfGrxSe9lhFovw_UCTs-mdFukKUu7ZoG3xxh54dBX8AUJnZ8IGqjmPjge1SkPCzpSZ2sw7R65vAsUUCmGpnRnQDJUj7abaAipmMbKDoivxch872w2XCyZtM7jvrpPsFmsld2LDjCH5CWAn7M5pwxxxz21v4PQjQNDwHlqslH9iWPDAwsX5CJGZBVzRAYIlAemN8qqVr7YlyHPmaAIfd4oPiT_jWUdZ194K3VmpbljUlAHCx0q5krocf3UKYdzqLc0Nep__vhp1pkBu3bvDxnnyJeHvV7Mkwro_cfJK37qSJzvcyt0c6nIHS5WgnUPN2_g&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_002_estado_notificaciones&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_002_estado_notificaciones&#34;, &#34;duration&#34;: &#34;00:00:55&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_002_estado_notificaciones&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:55&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWTtFlEJwTS8ur2QAewGdVeCqiDhVcXVMBmd31DUPXUMakFSRHjOiMpmBU7ozBaUPPSAAtLjkEZ89nk6MNutg8opAO_zVqti0sKvfNZWfOdbIQnf5kOq2Miyn-10kVs_xjITy3Z7uN1O8xxUgahmMy4ZsakMqSmverbxBXW4XN98ErHCL3bhGhnlXeVljNuIKPx_SlAbuoLcNA284I10KgJGw5tUrdP9lmbZP3nYC5q5jpFnxvJvESF4O7dwCFCehGOeMxNLsWDmucebJcUbsor1KVKC_gT_bPfAQ66-oYIsnD-AF2F_9CZ3mHugBuoFgEK4IyZryO9qT1bJ4kXxljBA7lREzlN1XlI_hCBAhP3j3fDfIdD_B760Dfuq__k-6GGhcfhx6BYLRWIbO1a64bow_9ziQtWLU_Wn4kj7DPD9k0iUGH9PyBOhimbIYGcx9RURSLIyKgTLuaUhMRtE86wA9mpianrIPBhsLItEVb--SENej55ghnOAU4IpeNb9DpVEWMN7j2vDyj3VJryLegabqpwn4vOwYUp__j_MoaTCdQAvBSpCFC42LxOkLoGLsmE8ddL677pa0dNOxZqfOkUOiZMTTbuZAGXR7OuT9CF2ag8FQoxXo6BlYetROgWQikjBvk2FrHYrv4jxw1rRNmpwMrq7IhWvxc6YpvxTJ8iwFawyQGcAMHeoiDfcrrU-M_JIeT2fTuDiSA0qDOMbRJqGYUkNeUosJLkUn1eSOH6H7PxdvLO0UV8DiEjwhe5SET7gzdmsGIOrvUCa2ae9qjGGn3N-LdtEq2-Tn6_tjBJbkgwQkRD-A1W3CoRue-dIH1hABrNKBrhWfSjhNeV7qxhBTcTMUSJGGARwgD04u71_89BtgwFn7mIfy1sjqbySpY5joA9tn363oo4FTjWQwNVu3eXEESmuN_yCz5SQEPtYB9SBMPu4VQ3tPcAt-qEN2ZqMXJ-tLbGbvfHLZ8qZw9vZcpLfZP6bOmwqvtsgnywFZlCiIZnKK9uTLKea0DDwtOQBNp5KZPw2SwcFNICla7R9WCKxVKiMf-iwaB2WCqaC55FCBwuqttmHrUZofzv1uRSs03xIxhh1udpyhY-Ez8JOliyZw-serNjTtdkqWAxYjBHFq2adH4igAv4T9f7dowDAIlUaRh-ywlD7Qh6VzUShRALAynBRaHbjovmkDbrKhg_8uuMFdPjAh3N7zAM8_CGCwxTXTjo-iDBWQf8PaVOH5BJHcRSh2TrqIuyR23Rv1WQh4uY49Th9Cu_OdcsYJ3Kub_saawkK79X5vgjJBMCihCAR7LvB65VEctDDQYBnT7w4qOl734b4mZohUox0YBd070KXmPT0UCjg7-G4SH2A-IhpeEs35uHuc1vhoi44FVUbwKEBvBLeGfKpTi3aRs82mJJRZayW6a-MbHmu9W68yQg36YY433_VaalgvETUV43p0Xjvc1V33HPQ3Togdsv6e-mIb5Ph3s_ISph7v8NbmI-2iKCN1_FzDvZY3bPINJM_wDM0dANSQr_nTzV1uv5lCnb0jkjnKg&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_003_detalle_notificacion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_003_detalle_notificacion&#34;, &#34;duration&#34;: &#34;00:00:55&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_003_detalle_notificacion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:55&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWR0aXl0fHF3V9EiEIV1ZdKbCn8hJqLinyqNDmx5nOevywEu_PArtwRllPhgp7o-ZV1qN4sWrXqSKRblD6gTMF1cZSdo3YWizLf8FJAvAVRcPpCIPQBc_EBRoUebiopx1W3ciCRN52MDAjBpUG4gFP09DR37cfp4tSxGLX17vTFBP58Qqo74Y8k0mZgnR8nw5vf7X7kxVI7AOTzmamdA0id8ZD4rhX8gLRq-TubbZu3VNZcunCK1SWgusiuSI2JN2zSrBu-xO6QObyyOdHwhJKCX95DoC7xmQfeuhJ_Lh7tGoEa5TDjeCwdqrWt7UsaJHf-UUqMMDozh2JFActGpXDD38F-dQvlpbb3zip3jvdR-vwNNmAugLcRpKvQ1APWgakX78gaL_1bAw0iKZG2yBOox5OJ-GevIAlZJO3M067d8-F18jf4teo2PHpcQYnzPldpmmsHgTR-rcbtd9TP_UZaLdZCI7Prj5818Y7IGLply5ptp4F23cZQJsjc_7IXkfdAugwYueRcY_F-bGLm6wNxeqBBhCap7WPYzo3qy14NWciTwFLHOBBFopfmvb8I5-Wj6tnl3Vn1Oes30wFIQA8AJl9cM3V-jJ_eJLmVyUYJmv_55le95yw9NDTZvl49cSa-OoowIz5Mm9PJOAKg5ApixsH7JP060BCP6jYpcjh7GxBxxKgQZ16aV5O5TY2jErJu3f3NMmrLyZAZzWbwIjvEHARXn9lUHPfmpcgGsoeZE-eLl87yd9XCYz-MutkccQL8cn6pyLuLvy_IN59SGxQfc2mfMtNv5jlcJorP0ww2F2yYc21ZB0V2wFiVmM_OZaqAC6PDtskKTjENXQ60oVGolojxSG_z9GMAvXL-uzcj0PdiXamI28asxpeYyA2uVunE2JTaebyxa280T0xPcH9NlxpRJM1IGaOL9uaKl5FxZHTZQufST2YSDbOZ9ekCei_jWeKWzjC7GqdtAmsU0r_BhDRUk9yW_V9T7nXw6xRj_LNMUCgsjJ3k8LCBvmA5KVfmAWVMJTizQnwPp_8DHGRAubG3XYu2poiQC0BQfuDG5NZ-VPDSDUSHIosz8fBapO-VdEx5O_il5ps8PJBD2oLM9WmqKiT-dwMo3kK_G4XIWLfVxpwSaK70qtbl9C-OuE7vXZ4VZ17ysIHdtu3klVfvG2Fn6o5Lwco3Yb0fXDwYTmzFl-i1j4MUDfQpNioGBTJhsoHFcNqNx5jUY1UcVzw-UhE-fU0yROBjk1LP5NSU-h_T7xNU4e0_AM0yx4ZXKzGcF0si_UzbcWrh0PX4k1kJtoOTae9WU-AZtP3FHDjT7Tp1-dx7taMrZj3_mTvaSKsYVnxF7zQA8y7m195HFyU-WA_SDe4CEXgjOkUo1uIIUYwZXnhlqBEOHLNsaZlRGBaGlmzm8_ZiYO0r_hX6Yj0-LI7kRZafh4qorxBhAKUTdw1_dQ72panAPxASWS3wniVvAwaahn8lA4qREcMZYdPPR60hxvR9xpd9IY1r7qqe3LCFPbPW3IFi5IAVY7B6W9D_pg9mVoVhXuVM&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_004_secciones_y_cargar_mas&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_004_secciones_y_cargar_mas&#34;, &#34;duration&#34;: &#34;00:00:54&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_004_secciones_y_cargar_mas&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:54&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWSBFWnqykYUcqpz2smI0oQw0xKTm1pu-aR7FwMcFbcyIFcbL7fgB5RW7Tk_nfi6NB4lsQOc8qNBnpu3RduB8K1-G0gJhocSy4k2U8xOkTQqjI4e4fs1rsFOQsSkZcVcgGYoZAqqEjpE86OZ7uTS3PI2zql9zDQydWUh19UZDrVve6IzZgWQpyj-DfxqFO1vNnUTox_tFXrZXVtu3oWjEpXb7db7URowGa5H7eKMbG_QjydwxUZAeKSkfQRh-9nQeJRAb45i2WyUcvbDHn_6XrFOoiXxn1VskU5kA2aTwW0YNPU-21ZmsLDH8oJZGmF1lLjavt_-XVoXN0lWDEX3MdeIriOZ_xOovMec8QvjPjotbd8BXPBfllobkjb74xyRAj-3Ov6Xj0ShLf4bm1Ll33VX8F_1pLwuOx4y-QsEAAgrBtwpEh-yW37JJKy17yHma496LwgJzAhLwON5Z7f2xXGlRh8daa7T52y79m3HKK7nl8KMJp0YBhHxH1GMmrNm1f06H83cWn62ZP2Rvjuv7HhPpS7dL_Rfd_7_Olp3CekjHFs4mJ6pXUwpi21etDjb8wgK2UF2LLrqbhPfPjFrgDzUxU-WVPzAOROnNRHBseJHY16yTHs6vvcB85chFAaz0V8_EGJDlBilq3KQg2tBpaaPtMBb40hRM0-z_enHkDEPalQlD7rSu8i3Z0Na4qDXNu3m19S63Yx1hMovcEcLw7nHnizu0izruH1I2YL5B9I9nZbGPR3NLSc2xz_ZgUV5AdVSr_4562MnQE3BWrzIAGnRLBKqgS9DWRflBTKbaMWKzVVOy_W0MYGEFjpU84QBERBEsDY2KHioBuvIBRtH6YLAW6i793e1lbbWOkNmnFybE5OQW3pWbIJoc5p7zh_M7cKDIBbFbnC-Lji8Wk63m_Z4f289a7QF3OerVBmkFtX53DZzJ67kmLqYtGxX5vUCpPH367v-PLCntxQye4Uk1YNWAsKAGsmGviGSw_e9dW7VLr_Y8gmteZPeP249rPSULcwjBOJCQHdQZF4EZdc3UcfeWK-U7ZpIoPxOQdLyzMuoq3YSLgwWQm-RT1j5aHWfba2bziO85GWf2xqwunKcKtW4sLN0ng-KXq4xp7prLSQxGOLy3Xp0JMqFk-o1FyH74WXOTJmCR0r0uoCUzNzOfyw-FOdLw426oAtvKYMppqolvYB2UPXdXlfuDMpJAnKKJrskFLnN6NkYF5UuU_GJ9EmRv7yVn5yiJAOku3Lu-iUZt4C6kKycny3Usq6Z6maMhUYtrLPp-Jxbg0iSPVRXh1ZzCYJ1xjB773AUytrzpDj4VgeDEg7ygZlzc58FzM7P9chGY0007ojIJsx0idbgoki-cTGO51B5-W8GLPN-ixRW_IYHENrmvCI5tpGZKC1mn6LX9SFM0DA8Y6k9DKI6wW3zrUWnJ8WkSBwFEYjaKxBKtWo8NjBdTdL894y8kSDgt_NxwomHdHMZhUEjgd_-qCVZ0ISARAeQBkyjKwLYnKvXJLyupPkdZgK7MPy-nAhB41vVjzwBuwGL&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_005_menu_configuracion_notificacion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_005_menu_configuracion_notificacion&#34;, &#34;duration&#34;: &#34;00:00:59&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_005_menu_configuracion_notificacion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:59&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWRT-neGBekRfscE9ZPMfLB17enEdQW6EkinyoDnF6OvNa6oa5lVedRpxFGVDZ6wX14K43LZSUH-y7GSXCYZfPsBxJ8obwjNtfFbaAH2CfGS6zHucs5mlwcsn7-PEMSFiQz88eRdccAQ84e2CJ3FZh9wyS5MW3b4pX-v-2ipzpjz6bFrkirDKQuRmoNd2JTK36JuqAq1znHXhV6hmu6_BjojlsK8P3DBFeZs3bRxXEuUWTFrY6E37IJioZI_Pb5etLfuHh0wwQhS4IKzfJiu6GItDWSzWXHJu02ZbVt1CI_uxpt2upIsinHWIhfX5REf7qLOrTkK5TOfuWqLVKFkVXiiQvRq0vZIE5doVrla6nxgsbfNcAtq6rhq4EAYmcp_2tvHIHQgPnQoQ-OiSdkyTJSvQbXwaXmpTcE5fkC3GNtyYgM2HOIXnTkVVMBO_u1Zk_Vgkznhqs_0t6GLU6kgQk85NjdwQ83P3n2Xwsd7o_GRuF-VPNy1aC3pFSmvHLwuECYwuCAwzkugcw6PYbW7ElFJ3S8d-xrVIy7VUZM9EUEKSBcYb1jutnG4eE94NOBbLTOVKBbytbGu7mO5Jb6t1NZhfW_sFF2jKe9V3Q8kaYH2O0VKHirHdKphkta1T54qNCjlxzdUhXSZRw4pR2AQh1QgOET8bOR0T44JFND6Q80DpA9xX09n1mD5e9uyuPhdYB7cFMZhq16jbcOVvW6eGQHYE69GvcpCPD4U8YM821tMbvHwpm9LoIKZBRcnXnUMRxmnD62-gWkT2J3WgBcCleb3rjyFojF4VZK3ngm5sQDPN8MD3JCPxA10deAr1SSoeDv6vUhMxu5bM98yt4m9Q81Uacw9mwryc1ftE5m0NR5WHoLCHf-EyYFfcZ7EJ8MUyFkSVBAnV7bwMaeoncbdQZjNlkXiieeuGSMq6h23zpxAmHPsy-jWva77eg2x_au9PpBoItQyoxQC6PoECStseWsdiXL5HUPZMwE5fakw-_4Wg15sb6p4D247J1xZfIf2YJyRGGZFrF5POgBdHtGN1Krmw5s4YOW-X4wnCgLJTXX3mJp9lccB5x43JtCACb0aTOpZK6JZ07L89tF2n-L_uRPTekfOPbTbQeCefSdEG39tt3cP2ilXVsvBOzvVAieGkJnbDOuxtMBL1O0VGKfXISAHQIaAuCkZwHcSpxScqtMkcU80pjEY2JAmha0251VTSS9Idf4ksbjL9mIK7_c-TQr1viO3UJ64vMQL7XLidlMtmG7d7TStM-XXylxqF-W5Hnts_TYOcsLNVnvC1C2dPJZ835lqQ44mN8ImSnhaIcMoPqviD93GlA4PYoheDU2VyubyGiA9v9_I13j_TArjXWSeXHZ446uQdLwd07GOzTUccvU4y9QV4rSXTaKsjRk2QZz1y-d-9ezzl3Np-DZGE7XrvSyzTFO4i246YNuNxLzHXHi5N71NRUV-cgvZUDLGqnWioT96Oh2QWTjlHwD_SvV6ukuZpwUNnQXKftmrBW-2YhfBUC3GBaI87wtzw_izuMPGU0GK1kEH_g&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_006_acciones_solicitud_amistad&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_006_acciones_solicitud_amistad&#34;, &#34;duration&#34;: &#34;00:04:31&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_006_acciones_solicitud_amistad&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:04:31&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/login\nScreenshot web: reports\\screenshots_web\\notifications\\TC_FB_NOT_006_WEB_sin_solicitud_amistad_20260623_102531.png\n&#34;}], &#34;tests_web/test_notifications_web.py::test_tc_fb_not_007_sin_conexion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests_web/test_notifications_web.py::test_tc_fb_not_007_sin_conexion&#34;, &#34;duration&#34;: &#34;00:00:56&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests_web/test_notifications_web.py::test_tc_fb_not_007_sin_conexion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:56&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;D:\\\\MonografiaGabriela\\\\facebook_appium_tests\\\\tests_web\\\\helpers.py&amp;#x27;, 90, &amp;#x27;Skipped: La cuenta requiere verificaci\u00f3n 2FA que no puede completarse autom\u00e1ticamente. Pre-autenticate ejecutando: uv run python tests_web/setup_session.py&amp;#x27;)\n\n----------------------------- Captured stdout call -----------------------------\n[cookies] No saved session file found\n[login] clicked via (&amp;#x27;xpath&amp;#x27;, &amp;#x27;//*[@role=&amp;quot;button&amp;quot; and contains(.,&amp;quot;Iniciar&amp;quot;)]&amp;#x27;)\n[login] URL after full flow: https://mbasic.facebook.com/two_step_verification/authentication/?encrypted_context=AWQvkQDsC-Jvj0UaHOzh2FOQ-Ho32MAZrGbyHddjNNfCFp82UC9aYNhdzZldXwyTeS-nIgzsg5iLuweMzHvcN-fg8_qv4c0d9EPlsDEAqUKyxRRUU-c8NPimlGHCJgdOmDnxeR131zmwxhUtT7NMLtN1TDDmKimkKmQdwhtquhUl1cl9hGtU2aIhxXCRJB1LSBRJy1XYsjvBN_6mWYuE2DTlvuHH1lchVYvxhg_RcYHU3L6MKCbzH7p5nz9qlbnZQnhwd5oCPOU6L9XQGSvOD1NRSVYGwE1DkIL4AsBHPtz63GyeWyftrl1ry291X5fsMppz4YZjlDdhhUt1GaDiMZBRGSGXQ5xH15tRqWahDFtjfqUZflndKeqzDqtCMHkkNCcrI0NzsS9QOLBydJT25RzmZIvnWh2XCRfV8CKuimR8uTq03A_9JsOqrvkFsVQpqhIdNqPuNnLAALtd6u5n7P3B-RVof3-Mr2BSTL4vDeYHSBZZbV5QKMijFPcbIzotxvXJ7cS00pl8WifjTzVDTnlQlB3Xc23RatmApVHnj1zWDmZsuuk4E0fATjLNruObLngw932vmYYhqWZ1EiwOZP-bweHsbHTk4tkpdwHVZx9s56OqjBuejS7cSpa27oBGYDxRFVLCkmoQDwqLj0NtlcnXOSFYZnAn3LOEyTdDJFPl69pgqA2FYMBVIQVlBRbsq0_SP4Vrv8Bo8e_J5qkQRn9kXtHwcuMBNZj8gZLv4URZMJZ_T9lxgZtGEGVgp2vTQdYQOkcQSIsdEnF13o70m1WhJx653sHhx00tvJZIGripM22bjaQ_OR688ap2b5oxx1ibs1U5m59iTbUxTcbJ-bd3bbpH6-g8GYDP--9_Ae0Y0dD_JRHwC4LqTAgRZ6dtRwjtjUgfE7PQhIiU-FgPb5r-8u6v4H_IYmivgk4J4Skvq22WcEzLLWHy-2nKYshZVt-QP4nBw8Ols2wcpiPboO5yEeC35leRI6iIFeZt1fhojyMQc0moaQ588b-wdhg_bmtktvSDzsEWeYH4SujNeX0X1qOJR4P0t6qbTvJFIliL25azz-oYVllMxV0mv5nZWdkPlBu7gsc5uQgEgZ0mpiLxc18lsv7ZWfuK4hPFCpaiVB8LGbBRvWj4d8n5U9kB4jEug0x4L0quQ69JrmZFNNeaMIoGM2NB91y0CEY0QEHrtpKtrwM-GwXbrCNDcHCfKTjjIIFKymZCnIOPGI3T0jDub5MlRLZl0vsYSOl2YChbaY7dwr3W6VBt9L-vlwSYZHddVGKKv_r7oy4iS05bunkkMW1SW_KPNEF23pVeKk2NeLvBlTir7TLqhr4S-0XO6E5tuP8kgtSXWjDGCDWqon1GdZuECp18eY8vsqfQGk2Vr9MQsw3gxrl0Lb-K998CKDcWgPR7CTEa1siSReFwM0rKY9rWLXpoImrb3xpMgLjt8tshA13umbfJ0YXufKHT5kQ5qGlka2c_wAd1pJfaa20p6fFAhDSO7sdd0_hDv2_54Wfy-01hNIUq5mq5nBCDSDmkc-hrbie3dJM&amp;amp;flow=pre_authentication&amp;amp;next=%2F\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report_web.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

@@ -9,17 +9,10 @@ from pages.base_page import BasePage
 
 
 class MessengerPage(BasePage):
-
-    # ------------------------------------------------------------------ #
-    # Constantes
-    # ------------------------------------------------------------------ #
-
-    # "Mensajería" es el content-desc del botón en la barra superior de main_fb.xml
     MESSENGER_TABS = [
         "Mensajería", "Messenger", "Mensajes", "Chats", "Bandeja de entrada",
     ]
     CHAT_LIST_INDICATORS = ["Chats", "Mensajes", "Bandeja de entrada"]
-    # "Campo de búsqueda" es el content-desc del campo clickeable en messages_fb.xml
     SEARCH_HINTS = ["Campo de búsqueda", "Buscar", "Search", "Buscar en Messenger", "Buscar personas"]
     MESSAGE_INPUT_HINTS = ["Aa", "Mensaje...", "Escribe un mensaje", "Mensaje"]
     SEND_TEXTS = ["Enviar", "Send"]
@@ -32,11 +25,7 @@ class MessengerPage(BasePage):
         "Pendiente", "Error", "No enviado", "Reintentando",
         "Sin conexión", "Reintentar", "Fallido",
     ]
-
-    # ------------------------------------------------------------------ #
-    # Navegación
-    # ------------------------------------------------------------------ #
-
+    
     def _dismiss_chat_promo_modal(self):
         """
         Descarta el modal 'Más formas de chatear' que Facebook muestra
@@ -252,23 +241,29 @@ class MessengerPage(BasePage):
         time.sleep(0.5)
 
         try:
-            screen_h = self.driver.get_window_size()["height"]
-            toolbar_threshold = screen_h * 0.85
-
             candidates = self.driver.find_elements(
                 AppiumBy.ANDROID_UIAUTOMATOR,
                 'new UiSelector().descriptionContains("Enviar")'
             )
+            # Usar el candidato con mayor y (más cerca del fondo) — es el botón
+            # del toolbar de composición. Con teclado visible el toolbar queda por
+            # encima del teclado (y < 85% de pantalla), por eso no filtramos por
+            # porcentaje fijo sino que elegimos el elemento más bajo de la lista.
+            best = None
+            best_y = -1
             for e in candidates:
                 try:
                     r = e.rect
-                    center_y = r.get("y", 0) + r.get("height", 0) // 2
-                    if center_y > toolbar_threshold:
-                        self.driver.tap([(r["x"] + r["width"] // 2, center_y)])
-                        time.sleep(2)
-                        return True
+                    cy = r.get("y", 0) + r.get("height", 0) // 2
+                    if cy > best_y:
+                        best_y = cy
+                        best = (r["x"] + r["width"] // 2, cy)
                 except Exception:
                     continue
+            if best is not None:
+                self.driver.tap([best])
+                time.sleep(2)
+                return True
         except Exception:
             pass
 
